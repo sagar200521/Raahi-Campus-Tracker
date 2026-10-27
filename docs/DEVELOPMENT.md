@@ -12,14 +12,15 @@ Use `pnpm install --frozen-lockfile` in a clean checkout. The project is standal
 
 | Command            | Purpose                                            |
 | ------------------ | -------------------------------------------------- |
-| `pnpm dev`         | Portable local Vinext development server           |
+| `pnpm dev`         | Next.js development server           |
 | `pnpm typecheck`   | TypeScript checks without emitting output          |
 | `pnpm test:flow`   | Domain and road-routing checks                     |
-| `pnpm build`       | Current Cloudflare/Vinext production artifact      |
-| `pnpm start`       | Wrangler local preview of the built Worker         |
-| `pnpm db:generate` | Generate new Drizzle migrations after schema edits |
+| `pnpm build`       | Next.js production build      |
+| `pnpm start`       | Run the built Next.js application         |
+| `pnpm db:migrate`  | Apply checked-in Postgres migrations              |
+| `pnpm test:db`     | Test API and concurrent writes on Postgres        |
 
-The initial local D1 setup command is in the root README. Use `.wrangler/state` for both development and built previews; do not append `/v3` manually. Production data is not included in this repository.
+Configure `DATABASE_URL` in `.env.local` and apply migrations as described in the root README. Use a dedicated development or test database; production data is not included in this repository.
 
 ## Validation coverage
 
@@ -32,7 +33,7 @@ The initial local D1 setup command is in the root README. Use `.wrangler/state` 
 - Collision/SOS state creation.
 - Connectivity across the ten mapped stops.
 
-It is a reducer/routing test, not a concurrent D1 integration or browser end-to-end suite. A public-deployment check previously confirmed that a submitted request survives a reload. Browser checks covered the normal ride lifecycle, incident handling, desktop and narrow-screen layouts.
+It is a reducer/routing test, not a database integration or browser end-to-end suite. `pnpm test:db` exercises real Postgres concurrency and API checks. A public-deployment check previously confirmed that a submitted request survives a reload. Browser checks covered the normal ride lifecycle, incident handling, desktop and narrow-screen layouts.
 
 For new backend work, add real API concurrency tests covering simultaneous accepts and compare-and-swap retries. Do not treat the reducer checks as proof of database isolation.
 
@@ -53,10 +54,8 @@ For new backend work, add real API concurrency tests covering simultaneous accep
 
 **Session expired:** create a fresh workspace. Sessions expire after seven days; current session reads enforce expiry, but automatic physical database cleanup is not implemented.
 
-**D1 table missing locally:** build once, apply the pending local migration once, then restart the dev server. Do not apply a local command to a remote database.
+**Session table missing:** check the database target and run `pnpm db:migrate`. Never apply migrations to an unintended database.
 
 **No road route:** choose other stops. The graph may be disconnected or an endpoint too far from a mapped node. Do not draw a fake straight-line route as a replacement.
-
-**Build/runtime requires Cloudflare:** expected for this snapshot. See `VERCEL_MIGRATION.md` before attempting Vercel.
 
 **Clean clone has no execution profile:** it defaults to portable. `.sites-runtime` is ignored and must not be committed. Original platform-specific instructions remain in `PLATFORM_RUNTIME.md`.

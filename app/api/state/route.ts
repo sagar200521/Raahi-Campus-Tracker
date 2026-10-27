@@ -1,68 +1,39 @@
-import { env } from "cloudflare:workers";
-import { hash } from "../session/route";
-import { transition } from "../../fleet";
-export const dynamic = "force-dynamic";
-async function session(req: Request) {
-  const key = req.headers.get("X-Raahi-Session") || "";
-  if (!/^[a-zA-Z0-9-]{64,100}$/.test(key))
-    throw new Error("Open or create a shared demo session");
-  const id = await hash(key);
-  const row = await env
-    .DB!.prepare("SELECT * FROM demo_sessions WHERE id=? AND expires>?")
-    .bind(id, Date.now())
-    .first<any>();
-  if (!row) throw new Error("This demo session has expired or does not exist");
-  return { id, row };
+import { readSession, updateSession, sessionId, SessionError } from '../../../db/sessions.ts';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+const headers = { 'Cache-Control': 'no-store' };
+function failure(error: unknown) {
+  return Response.json({ error: error instanceof SessionError ? error.message : 'Shared sessions are temporarily unavailable. Please retry.' },
+    { status: error instanceof SessionError ? error.status : 503, headers });
 }
 export async function GET(req: Request) {
   try {
-    const { row } = await session(req);
-    return Response.json(
-      {
-        state: JSON.parse(row.state),
-        version: row.version,
-        expires: row.expires,
-      },
-      { headers: { "Cache-Control": "no-store" } },
-    );
-  } catch (e: any) {
-    return Response.json({ error: e.message }, { status: 401 });
-  }
+    return Response.json(await readSession(sessionId(req.headers.get('X-Raahi-Session') || '')), { headers });
+  } catch (error) { return failure(error); }
 }
 export async function POST(req: Request) {
-  const origin = req.headers.get("origin");
+  const origin = req.headers.get('origin');
   if (origin && origin !== new URL(req.url).origin)
-    return Response.json({ error: "Invalid origin" }, { status: 403 });
+    return Response.json({ error: 'Invalid origin' }, { status: 403, headers });
   try {
-    if (Number(req.headers.get("content-length")) > 8192)
-      return Response.json({ error: "Request too large" }, { status: 413 });
-    const raw = await req.text();
-    if (raw.length > 8192)
-      return Response.json({ error: "Request too large" }, { status: 413 });
-    const b = JSON.parse(raw);
-    for (let i = 0; i < 4; i++) {
-      const { id, row } = await session(req);
-      const state = transition(JSON.parse(row.state), b);
-      const result = await env
-        .DB!.prepare(
-          "UPDATE demo_sessions SET state=?,version=version+1 WHERE id=? AND version=?",
-        )
-        .bind(JSON.stringify(state), id, row.version)
-        .run();
-      if (result.meta.changes)
-        return Response.json(
-          { state, version: row.version + 1, expires: row.expires },
-          { headers: { "Cache-Control": "no-store" } },
-        );
+    if (Number(req.headers.get('content-length')) > 8192)
+      throw new SessionError('Request too large', 413);
+    // Bound streamed bodies too, even if Content-Length is absent or incorrect.
+    const reader = req.body?.getReader();
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > 8192) { await reader.cancel(); throw new SessionError('Request too large', 413); }
+        chunks.push(value);
+      }
     }
-    return Response.json(
-      { error: "Another update is in progress. Please retry." },
-      { status: 409 },
-    );
-  } catch (e: any) {
-    return Response.json(
-      { error: e.message || "Unable to update demo session" },
-      { status: 400 },
-    );
-  }
+    let action: unknown;
+    try { action = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+    catch { throw new SessionError('Invalid JSON', 400); }
+    return Response.json(await updateSession(sessionId(req.headers.get('X-Raahi-Session') || ''), action), { headers });
+  } catch (error) { return failure(error); }
 }

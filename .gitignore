@@ -49,6 +49,7 @@ yarn-error.log*
 
 # External deployment and local artifacts
 /.vercel/
+/.insforge/
 *.tar.gz
 *.zip
 !/.env.example

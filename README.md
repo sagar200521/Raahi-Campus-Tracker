@@ -24,12 +24,12 @@ Speed alerts trigger **strictly above 25 km/h**. Possible collisions require hum
 ## Stack and current hosting
 
 - React 19, TypeScript, Next-compatible App Router components and route handlers.
-- **Vinext + Vite**, built for **Cloudflare Workers**.
-- **Cloudflare D1** for shared demo sessions; Drizzle schema and checked-in SQL migrations.
+- **Next.js** on Node.js, with Vercel deployment configuration.
+- **InsForge Postgres** for shared demo sessions; checked-in SQL migrations and atomic version checks.
 - Vendored **Leaflet 1.9.4**, OpenStreetMap geographic data, Lucide icons, custom CSS.
 - pnpm lockfile; Node.js **24** recommended.
 
-**GitHub holds the source. It does not by itself host this server application.** The existing demo stays on its current host. Vercel deployment is a later step: the Worker entrypoint, Cloudflare bindings and D1 access must first be adapted. See [the Vercel migration plan](docs/VERCEL_MIGRATION.md).
+**GitHub holds the source.** The existing public demo remains on its current host. The Next.js migration uses a separate Postgres database; deployment status and setup are described in [the Vercel migration plan](docs/VERCEL_MIGRATION.md).
 
 ## Quick start
 
@@ -43,16 +43,15 @@ pnpm test:flow
 pnpm build
 ```
 
-Initialize a **new local preview database** with the checked-in schema migration:
+Set `DATABASE_URL` in `.env.local` to a Postgres connection string, then run:
 
 ```bash
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_dizzy_avengers.sql
+pnpm db:migrate
+pnpm test:db
 pnpm dev
 ```
 
-Open the URL printed by the dev server (normally `http://localhost:5173`). Apply that migration once per local database. Later migrations must be applied in order; do not replay an already applied migration. Rebuild after changing binding configuration. Local D1 data is separate from the hosted demo.
-
-A clean clone defaults to the portable execution profile. Do not copy `.sites-runtime/`, `.wrangler/`, credentials, or production database contents from another machine.
+The migrations are tracked with checksums and run outside request handling. Use a separate database for development and testing. Never commit connection strings, session keys or database contents.
 
 ## Try the workflow
 
@@ -76,12 +75,12 @@ Samples become stale after five minutes. Send a stationary sample through Demo c
 | `app/api/session/route.ts`       | Creates expiring demo sessions                                   |
 | `app/api/state/route.ts`         | Reads state and applies optimistic updates                       |
 | `app/globals.css`                | Branding, layout, responsive styles and map presentation         |
-| `db/`, `drizzle/`                | D1 schema, SQL migration and Drizzle metadata                    |
+| `db/`, `drizzle/`                | Postgres session adapter and migrations; retained D1 migration history                    |
 | `public/campus.json`             | OpenStreetMap snapshot, routing network and sourced landmarks    |
 | `public/assets/`                 | Logo, hardware photo/video, project report and presentation      |
 | `public/vendor/`                 | Vendored Leaflet files                                           |
 | `design/`                        | Brand source, design tokens and interface specification          |
-| `scripts/`, `worker/`, `vendor/` | Checks, build/development support and current Worker runtime     |
+| `scripts/`, `worker/`, `vendor/` | Checks and retained Worker runtime reference     |
 | `components/`, `hooks/`, `lib/`  | Retained starter primitives and optional integration helpers     |
 | `.openai/hosting.json`           | Current Sites/D1 hosting declaration; no credentials             |
 

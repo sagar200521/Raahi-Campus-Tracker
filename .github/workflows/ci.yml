@@ -9,6 +9,19 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: raahi
+          POSTGRES_PASSWORD: local-test-only
+          POSTGRES_DB: raahi_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://raahi:local-test-only@localhost:5432/raahi_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,5 +35,11 @@ jobs:
         run: pnpm typecheck
       - name: Check fleet lifecycle and routing
         run: pnpm test:flow
-      - name: Build current Cloudflare application
+      - name: Migrate Postgres (including idempotent rerun)
+        run: |
+          pnpm db:migrate
+          pnpm db:migrate
+      - name: Postgres concurrency and API checks
+        run: pnpm test:db
+      - name: Build Next.js application
         run: pnpm build

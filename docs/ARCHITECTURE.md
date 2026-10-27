@@ -2,7 +2,7 @@
 
 ## Request path
 
-The React client calls two same-origin App Router endpoints. They use the Cloudflare `DB` binding. The `worker/index.ts` entrypoint and Vite/Vinext configuration build the application for Workers.
+The React client calls two same-origin App Router endpoints. They use a server-only Postgres adapter. Next.js builds the Vercel runtime; the original Worker files remain as historical reference.
 
 | Module                 | Responsibility                                                                           |
 | ---------------------- | ---------------------------------------------------------------------------------------- |
@@ -13,7 +13,7 @@ The React client calls two same-origin App Router endpoints. They use the Cloudf
 | `api/session/route.ts` | Random session key generation, SHA-256 key hash and initial session insert               |
 | `api/state/route.ts`   | Session lookup, state reads, validation, compare-and-swap updates                        |
 
-## D1 persistence
+## Postgres persistence
 
 `demo_sessions` contains `id`, `state`, `version`, and `expires`.
 
@@ -22,7 +22,7 @@ The React client calls two same-origin App Router endpoints. They use the Cloudf
 - `version`: monotonic optimistic concurrency counter.
 - `expires`: server-side expiry timestamp.
 
-Writes read the current row, run the state reducer and update with `WHERE id = ? AND version = ?`. A failed compare-and-swap is retried, up to four attempts. This prevents simultaneous updates from silently replacing each other. The state reducer prevents multiple active trips for one vehicle and multiple active requests for one demo student identity.
+Writes read the current row, run the state reducer and update with `WHERE id = ? AND version = ?`. A failed compare-and-swap is retried, up to four attempts. The session and migration tables have row-level security enabled and are inaccessible to InsForge anonymous and authenticated API roles. This prevents simultaneous updates from silently replacing each other. The state reducer prevents multiple active trips for one vehicle and multiple active requests for one demo student identity.
 
 The bounded demo stores at most 100 rides and the most recent 100 incidents per session. This single-JSON-row model is suitable for a small demonstration. Production should normalize entities and use appropriate transactional assignment constraints, event retention and indexes.
 
@@ -58,6 +58,6 @@ Routes follow the local graph and one-way flags. Endpoint matching fails beyond 
 
 ## Security boundary
 
-A shared link grants control of an entire demo session. Role selection changes the interface, not access permissions. D1 stores only the key hash. Reads check expiry, writes validate action shape and size, and write endpoints reject a mismatched Origin when present.
+A shared link grants control of an entire demo session. Role selection changes the interface, not access permissions. Postgres stores only the key hash. Reads check expiry, writes validate action shape and size, and write endpoints reject a mismatched Origin when present.
 
 Before real deployment, add verified user identity, server-side membership and roles, device authentication, rate limits, data retention controls and an explicit dispatch integration.
