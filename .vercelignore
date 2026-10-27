@@ -1,0 +1,17 @@
+.git
+node_modules
+.next
+.sites-runtime
+.wrangler
+.insforge
+.vercel
+.env*
+.agents
+.codex
+.aws
+raahi
+outputs
+work
+*.zip
+*.tar.gz
+*.tsbuildinfo
