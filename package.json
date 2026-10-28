@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test:flow": "node --experimental-strip-types scripts/check-flow.ts",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate-postgres.mjs",
-    "test:db": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/check-postgres.ts"
+    "test:db": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/check-postgres.ts",
+    "test:ttn": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/check-ttn.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

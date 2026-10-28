@@ -61,3 +61,9 @@ Routes follow the local graph and one-way flags. Endpoint matching fails beyond 
 A shared link grants control of an entire demo session. Role selection changes the interface, not access permissions. Postgres stores only the key hash. Reads check expiry, writes validate action shape and size, and write endpoints reject a mismatched Origin when present.
 
 Before real deployment, add verified user identity, server-side membership and roles, device authentication, rate limits, data retention controls and an explicit dispatch integration.
+
+## TTN device telemetry
+
+The authenticated TTN webhook stores explicitly selected uplink fields in Postgres with atomic delivery deduplication. Real and simulated records are separate; last-known periodic GPS fixes are retained independently of the most recent uplink. Event snapshots do not move the marker. The dashboard shows these readings separately from simulated fleet vehicles and incidents.
+
+The owner chose to allow any valid shared-demo session to read the configured real device. Since sessions can be created by anyone, this is public demo access, not identity-based authorization or device ownership. Do not use it for private location data. See `TTN_WEBHOOK.md` for setup, validation and limits.

@@ -1,0 +1,11 @@
+{
+  "end_device_ids": { "device_id": "raahi-vt", "application_ids": { "application_id": "vehicle-tracker-raahi" }, "dev_eui": "70B3D57ED0079B4D", "join_eui": "0000000000000000" },
+  "received_at": "2026-10-28T00:06:52.296253379Z",
+  "simulated": true,
+  "uplink_message": {
+    "session_key_id": "synthetic-session-1", "f_port": 2, "f_cnt": 1,
+    "decoded_payload": { "payload_version": 1, "sequence": 2, "message_type": "periodic", "snapshot_uptime_ms": 84444, "latitude": null, "longitude": null, "altitude_m": null, "speed_kmph": null, "crash_status_code": 0, "crash_status": "no_event_detected", "crash_alert": false, "impact_candidate": false, "suspected_rollover": false, "gps_valid": false, "altitude_valid": false, "speed_valid": false, "gps_age_ms_at_snapshot": null, "sensor_fresh": false, "detector_armed": false, "sensor_clipped": false, "fifo_warning": false, "event_queue_overflow": false },
+    "decoded_payload_warnings": ["Detector was unavailable or not armed at the snapshot."],
+    "rx_metadata": [{ "gateway_ids": { "gateway_id": "dlos8-outdoor-2" }, "rssi": -45, "snr": 13.5 }]
+  }
+}

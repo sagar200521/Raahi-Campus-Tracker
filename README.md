@@ -7,7 +7,7 @@ Raahi is an IIT Roorkee B.Tech project demonstrating campus e-rickshaw coordinat
 **Project contributors:** Sagar Baruah and Ponting.  
 **Current public demo:** https://campus-fleet-btp.justbat256.chatgpt.site/
 
-> This is a functional shared demonstration, not an operational transport or emergency service. Vehicle positions and incident events are simulated. Role switching is not production authentication.
+> This is a functional shared demonstration, not an operational transport or emergency service. Fleet vehicle positions and incident events are simulated. The separately labelled TTN device panel can show hardware uplinks when configured. Role switching is not production authentication.
 
 ## What works
 
@@ -89,6 +89,7 @@ Samples become stale after five minutes. Send a stationary sample through Demo c
 - [Project context and current status](docs/CONTEXT.md)
 - [Architecture and persistence](docs/ARCHITECTURE.md)
 - [API contract](docs/API.md)
+- [TTN webhook setup and testing](docs/TTN_WEBHOOK.md)
 - [Development, tests and troubleshooting](docs/DEVELOPMENT.md)
 - [UI and brand guidelines](design/README.md)
 - [Vercel migration and deployment plan](docs/VERCEL_MIGRATION.md)

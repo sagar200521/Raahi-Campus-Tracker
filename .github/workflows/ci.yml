@@ -41,5 +41,7 @@ jobs:
           pnpm db:migrate
       - name: Postgres concurrency and API checks
         run: pnpm test:db
+      - name: Synthetic TTN integration checks
+        run: pnpm test:ttn
       - name: Build Next.js application
         run: pnpm build

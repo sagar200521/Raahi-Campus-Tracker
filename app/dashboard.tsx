@@ -35,6 +35,7 @@ import {
   Plus,
 } from "lucide-react";
 import CampusMap from "./campus-map";
+import TtnPanel, { useTtn } from "./ttn-panel";
 import { buildGraph, distance, roadRoute, Point } from "./routing";
 import { activeStatuses, inside } from "./fleet";
 type Role = "admin" | "student" | "driver" | "project";
@@ -142,6 +143,7 @@ export default function Dashboard() {
     actionRef = useRef(false),
     versionRef = useRef(-1);
   const graph = useMemo(() => (data ? buildGraph(data) : null), [data]);
+  const ttn = useTtn(key, role === "admin");
   function notify(s: string) {
     setToast(s);
     setTimeout(() => setToast(""), 4200);
@@ -521,6 +523,7 @@ export default function Dashboard() {
           <CampusMap
             data={data}
             vehicles={role === "admin" ? displayVehicles : vehicles}
+            ttnGps={role === "admin" ? ttn.live?.last_known_gps : null}
             selected={
               studentMap && tab === "active" && myActive
                 ? myActive.vehicle
@@ -573,7 +576,7 @@ export default function Dashboard() {
             <i className="gray" />
             Offline / stale
           </span>
-          <span className="legend-note">Demo vehicles · real geography</span>
+          <span className="legend-note">Demo vehicles · real geography{role === "admin" && ttn.live?.last_known_gps ? " · TTN last-known fix" : ""}</span>
         </div>
         {tilesInfo && (
           <div className="map-info">
@@ -1099,7 +1102,7 @@ export default function Dashboard() {
           <div className="demo-caption">
             Role switching is a demonstration.
             <br />
-            No live hardware or real dispatch.
+            Demo fleet simulated · no real dispatch.
           </div>
         </div>
       </aside>
@@ -1260,6 +1263,7 @@ export default function Dashboard() {
               </div>
               {role === "admin" && (
                 <>
+                  <TtnPanel live={ttn.live} simulated={ttn.simulated} error={ttn.error} />
                   <div className="stats">
                     <Stat
                       label="AVAILABLE VEHICLES"

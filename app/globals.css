@@ -2239,3 +2239,14 @@ footer b {
     font-size: 12px !important;
   }
 }
+
+/* TTN device panel follows the existing dashboard palette. */
+.ttn-content { padding: 0 20px 20px; color: var(--muted, #8b9eb5); font-size: 13px; }
+.ttn-switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.ttn-switch [aria-pressed="true"] { border-color: #72e3bd; color: #72e3bd; }
+.ttn-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.ttn-grid > div { display: flex; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid #243449; border-radius: 8px; min-width: 0; }
+.ttn-grid strong { color: #eaf2fa; overflow-wrap: anywhere; font-size: 13px; }
+.ttn-grid small { color: #8b9eb5; }
+.ttn-content summary { cursor: pointer; color: #eaf2fa; }
+@media (max-width: 700px) { .ttn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ttn-content { padding: 0 14px 14px; } }

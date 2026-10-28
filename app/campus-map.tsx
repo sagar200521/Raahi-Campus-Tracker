@@ -28,6 +28,7 @@ export default function CampusMap({
   destination,
   path,
   focus,
+  ttnGps,
 }: any) {
   const container = useRef<HTMLDivElement>(null),
     map = useRef<any>(null),
@@ -136,6 +137,12 @@ export default function CampusMap({
         { direction: "top" },
       );
     }
+    // The campus map is bounded; outside-campus fixes remain visible as coordinates in the panel.
+    if (ttnGps && ttnGps.latitude >= 29.854 && ttnGps.latitude <= 29.879 && ttnGps.longitude >= 77.882 && ttnGps.longitude <= 77.911) {
+      L.marker([ttnGps.latitude, ttnGps.longitude], {
+        icon: L.divIcon({ className: 'point-icon', html: '<span style="background:#ffc185">T</span>', iconSize: [25, 25] }),
+      }).addTo(g).bindTooltip('TTN real device · last-known GPS fix · receipt time is not fix time', { direction: 'top' });
+    }
     for (const [p, label, color] of [
       [pickup, "P", "#72e3bd"],
       [destination, "D", "#a7afff"],
@@ -153,7 +160,7 @@ export default function CampusMap({
         path.map((p: any) => [p.lat, p.lng]),
         { color: "#72e3bd", weight: 5, opacity: 0.9 },
       ).addTo(g);
-  }, [vehicles, selected, pickup, destination, path, data, ready]);
+  }, [vehicles, selected, pickup, destination, path, data, ready, ttnGps]);
   useEffect(() => {
     if (focus && map.current)
       map.current.flyTo([focus.lat, focus.lng], 18, { duration: 0.6 });
@@ -235,7 +242,7 @@ export default function CampusMap({
         <MapPin size={12} />{" "}
         {onPoint
           ? "Click the map to choose a stop"
-          : "Mapped roads & landmarks · vehicle positions simulated"}
+          : "Mapped roads & landmarks · demo vehicle positions simulated"}
       </div>
       {error && (
         <div className="map-error" role="status">
