@@ -74,12 +74,23 @@ try {
   const testData = await testView.json(); assert.equal(testData.history.length, 2); assert.equal(testData.latest.frame_counter, 6);
   const realData = await (await readTelemetry(requestRead(''), context)).json();
   assert.equal(realData.latest, null); assert.equal(realData.history.length, 0);
+  // Test the non-simulated branch with a synthetic payload under a unique test-only device.
+  const realPath = clone(); realPath.simulated = false; realPath.uplink_message.session_key_id = 'test-real-path';
+  realPath.uplink_message.decoded_payload_warnings = [];
+  const realResult = await POST(request(realPath));
+  assert.equal(realResult.status, 200); assert.equal((await realResult.json()).status, 'stored');
+  const realView = await (await readTelemetry(requestRead(''), context)).json();
+  assert.equal(realView.latest.latitude, null); assert.equal(realView.latest.gps_valid, false);
+  assert.equal(realView.latest.sensor_fresh, false); assert.equal(realView.latest.detector_armed, false);
+  assert.ok(realView.latest.diagnostic_warnings.some((w: string) => w.includes('Detector not ready')));
   assert.equal((await readTelemetry(requestRead('?limit=101'), context)).status, 400);
   assert.equal((await readTelemetry(requestRead(''), { params: Promise.resolve({ deviceId: 'other' }) })).status, 404);
   const invalid = clone(); invalid.uplink_message.decoded_payload.latitude = 91;
   assert.equal((await POST(request(invalid))).status, 400);
   const failure = spawnSync(process.execPath, ['--experimental-strip-types', '--input-type=module', '-e', `import { POST } from './app/api/ttn/uplink/route.ts'; const b=JSON.parse(process.env.TEST_TTN_FIXTURE); const r=await POST(new Request('http://localhost/api/ttn/uplink',{method:'POST',headers:{authorization:'Bearer test-only-secret'},body:JSON.stringify(b)})); console.log(r.status);`], { cwd: process.cwd(), encoding: 'utf8', env: { ...process.env, DATABASE_URL: '', TEST_TTN_FIXTURE: JSON.stringify(fixture) } });
   assert.equal(failure.status, 0); assert.match(failure.stdout, /503/);
+  assert.match(failure.stderr, /DATABASE_URL_MISSING/); assert.match(failure.stderr, /request_id/);
+  assert.match(failure.stderr, /test-device/); assert.doesNotMatch(failure.stderr, /test-only-secret|synthetic-session-1/);
   console.log('PASS: synthetic TTN auth, validation, durable concurrent deduplication, resets, ordering, event GPS, diagnostics and persistence failure');
 } finally {
   if (sessionKey) await pool.query('DELETE FROM public.demo_sessions WHERE id=$1', [hash(sessionKey)]);

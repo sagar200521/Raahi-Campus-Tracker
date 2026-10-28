@@ -8,7 +8,7 @@ type RecordData = {
   sensor_fresh: boolean | null; detector_armed: boolean | null; crash_alert: boolean | null;
   impact_candidate: boolean | null; suspected_rollover: boolean | null; crash_status: string | null;
   gateway_id: string | null; rssi_dbm: number | null; snr_db: number | null; battery_percentage: number | null;
-  fifo_warning: boolean | null; event_queue_overflow: boolean | null; sensor_clipped: boolean | null; decoder_warnings: string[];
+  fifo_warning: boolean | null; event_queue_overflow: boolean | null; sensor_clipped: boolean | null; decoder_warnings: string[]; diagnostic_warnings?: string[];
 };
 export type TtnView = { simulated: boolean; latest: RecordData | null; last_known_gps: RecordData | null; history: RecordData[] };
 const age = (time: string) => {
@@ -42,7 +42,7 @@ export default function TtnPanel({ live, simulated, error }: { live: TtnView | n
   const view = showSimulated ? simulated : live, r = view?.latest, gps = view?.last_known_gps;
   const isStale = r ? Date.now() - Date.parse(r.received_at) > 300000 : true;
   const currentGps = r?.message_type === 'periodic' && r.gps_valid === true && r.latitude != null && r.longitude != null;
-  const warnings = [ ...(r?.decoder_warnings || []), ...(r?.fifo_warning ? ['Sensor FIFO warning'] : []), ...(r?.event_queue_overflow ? ['Event queue overflow'] : []), ...(r?.sensor_clipped ? ['Sensor clipped'] : []) ];
+  const warnings = [ ...(r?.decoder_warnings || []), ...(r?.diagnostic_warnings || []), ...(r?.fifo_warning ? ['Sensor FIFO warning'] : []), ...(r?.event_queue_overflow ? ['Event queue overflow'] : []), ...(r?.sensor_clipped ? ['Sensor clipped'] : []) ];
   return <section className="panel section-gap" aria-label="TTN device telemetry">
     <div className="panel-head"><div><h2>TTN device · raahi-vt</h2><p>Real hardware telemetry is separate from the simulated fleet. Anyone with a demo session can view this device.</p></div></div>
     <div className="ttn-content">

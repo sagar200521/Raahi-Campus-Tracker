@@ -15,6 +15,8 @@ A placeholder example is in `.env.example` in the local workspace. Apply the ver
 
 Deploy the Next.js app on Vercel after configuring the variables; a Git push to the connected repository triggers a deployment. `GET /api/ttn/health` returns `{ "ready": true }` only if the required configuration and tables are available; it does not indicate that a real packet was received.
 
+If readiness fails, check Production environment variable names, deploy after changing them, and verify database connectivity and the migration. Webhook and health logs include a generated request ID, stage, and sanitized reason code; authenticated webhook logs may include only allowlisted application/device IDs. Logs omit secrets, authorization headers, session identifiers and database credentials. The request ID is also returned in the `X-Request-Id` response header.
+
 ## TTN console
 
 In the EU1 console, choose application `vehicle-tracker-raahi`, Integrations → Webhooks → Add webhook → Custom webhook:

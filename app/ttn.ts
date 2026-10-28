@@ -3,7 +3,8 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 type Obj = Record<string, unknown>;
 export class TtnError extends Error {
   status: number;
-  constructor(message: string, status = 400) { super(message); this.status = status; }
+  code: string;
+  constructor(message: string, status = 400, code = 'TTN_REQUEST_INVALID') { super(message); this.status = status; this.code = code; }
 }
 function object(value: unknown, field: string): Obj {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TtnError(`Invalid ${field}`);
@@ -28,7 +29,7 @@ export function configured() {
   const secret = process.env.TTN_WEBHOOK_SECRET;
   const application = process.env.TTN_ALLOWED_APPLICATION_ID;
   const devices = (process.env.TTN_ALLOWED_DEVICE_IDS || '').split(',').map(x => x.trim()).filter(Boolean);
-  if (!secret || !application || !devices.length) throw new TtnError('Webhook is not configured', 503);
+  if (!secret || !application || !devices.length) throw new TtnError('Webhook is not configured', 503, 'TTN_CONFIG_MISSING');
   return { secret, application, devices };
 }
 export function authorized(header: string | null, secret: string) {
@@ -87,6 +88,7 @@ export function parseUplink(input: unknown, allowed: { application: string; devi
     gps_age_ms_at_snapshot: number(d.gps_age_ms_at_snapshot, 'gps_age_ms_at_snapshot', 0, Number.MAX_SAFE_INTEGER, true),
     sensor_fresh: bool(d.sensor_fresh, 'sensor_fresh'), detector_armed: bool(d.detector_armed, 'detector_armed'), sensor_clipped: bool(d.sensor_clipped, 'sensor_clipped'), fifo_warning: bool(d.fifo_warning, 'fifo_warning'), event_queue_overflow: bool(d.event_queue_overflow, 'event_queue_overflow'),
     decoder_warnings, ...(gateways[0] || { gateway_id: null, rssi_dbm: null, snr_db: null }),
+    diagnostic_warnings: (d.sensor_fresh === false || d.detector_armed === false) ? ['Detector not ready: sensor is stale or detector is not armed.'] : [],
     battery_percentage: number(lastBattery?.value ?? d.battery_percentage ?? root.battery_percentage, 'battery_percentage', 0, 100), simulated,
   };
   const delivery_id = createHash('sha256').update(JSON.stringify([application_id, device_id, session, counter])).digest('hex');
